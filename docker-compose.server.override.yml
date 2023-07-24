@@ -14,9 +14,9 @@ services:
     networks:
       - app
       - frontend
-    env_file: ./.env
-    depends_on:
-      - mariadb
+    env_file:
+      - ./.env
+      - ./.env.local
     ports:
       - '8080'
     volumes:
