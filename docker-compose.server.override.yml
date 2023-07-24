@@ -23,6 +23,9 @@ services:
       - ./userfiles:/var/www/html/userfiles:rw
       # Volume to store public files, logo etc
       - ./public_userfiles:/var/www/html/public/userfiles:rw
+    extra_hosts:
+      # Unknown why this is needed. Container won't connect otherwise
+      - host.docker.internal:host-gateway
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=frontend"
