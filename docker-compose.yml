@@ -1,0 +1,65 @@
+# itk-version: 3.0.0
+version: "3"
+
+networks:
+  frontend:
+    external: true
+  app:
+    driver: bridge
+    internal: false
+
+volumes:
+  userfiles:
+  public_userfiles:
+
+services:
+  mariadb:
+    image: itkdev/mariadb:latest
+    networks:
+      - app
+    ports:
+      - '3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_USER=db
+      - MYSQL_PASSWORD=db
+      - MYSQL_DATABASE=db
+      #- ENCRYPT=1 # Uncomment to enable database encryption.
+
+  leantime:
+    image: leantime/leantime:latest
+    networks:
+      - app
+      - frontend
+    env_file:
+      - ./.env
+      - ./.env.local
+    depends_on:
+      - mariadb
+    ports:
+      - '8080'
+    volumes:
+      - ./userfiles:/var/www/html/userfiles:rw
+      # Volume to store public files, logo etc
+      - ./public_userfiles:/var/www/html/public/userfiles:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${COMPOSE_DOMAIN}`)"
+#     HTTPS config - uncomment to enable redirect from :80 to :443
+#      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=redirect-to-https"
+#      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  mailhog:
+    image: itkdev/mailhog
+    networks:
+      - app
+      - frontend
+    ports:
+      - "1025"
+      - "8025"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}Mailhog.rule=Host(`mailhog-${COMPOSE_DOMAIN}`)"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}Mailhog.loadbalancer.server.port=8025"
